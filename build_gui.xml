@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+Copyright 2011 OpenThinking Systems, LLC
+Available under the GPLv3 Open Source license
+-->
+<project default="create_run_jar" name="Create Runnable Jar for BatesMaster GUI">
+    <target name="create_run_jar">
+        <jar destfile="batesmaster_gui.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="com.batesmaster.gui.SwingWindow"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/iText-2.1.7.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/jopt-simple-3.1.jar"/>
+        </jar>
+    </target>
+</project>
