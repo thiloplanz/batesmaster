@@ -17,6 +17,7 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -110,10 +111,20 @@ public class SwingWindow {
 
 		final batesStamper stamper;
 
-		StampPDF(SwingWindow window, File inPdf) {
+		// only set if an existing file is about to be overwritten
+		// has value "true" if the user replied "Overwrite all"
+		final AtomicBoolean overwriteAll;
+
+		StampPDF(SwingWindow window, File inPdf, AtomicBoolean overwriteAll) {
 			int startNumber = Integer.parseInt(window.tfStartingNumber
 					.getText());
 			File outPdf = new File(inPdf.getAbsolutePath() + ".out.pdf");
+
+			if (outPdf.exists()) {
+				this.overwriteAll = overwriteAll;
+			} else {
+				this.overwriteAll = null;
+			}
 
 			stamper = new batesStamper(inPdf.getAbsolutePath(), outPdf
 					.getAbsolutePath(), startNumber);
@@ -128,6 +139,22 @@ public class SwingWindow {
 
 		@Override
 		public void run() {
+
+			if (overwriteAll != null && overwriteAll.get() == false) {
+				int result = JOptionPane.showOptionDialog(null,
+						"Do you want to overwrite the existing file\n'"
+								+ stamper.outputFileName + "'?",
+						"Overwrite existing file?",
+						JOptionPane.YES_NO_CANCEL_OPTION,
+						JOptionPane.WARNING_MESSAGE, null, new Object[] {
+								"Yes", "No", "Overwrite all"
+
+						}, "No");
+				if (result == JOptionPane.NO_OPTION)
+					return;
+				if (result == JOptionPane.CANCEL_OPTION)
+					overwriteAll.set(true);
+			}
 
 			if (!stamper.ProcessDoc()) {
 				JOptionPane.showMessageDialog(null,
@@ -180,10 +207,12 @@ public class SwingWindow {
 										.getTransferable().getTransferData(
 												DataFlavor.javaFileListFlavor);
 								boolean result = false;
+								AtomicBoolean overwriteAll = new AtomicBoolean();
 								for (File fi : f) {
 									if (fi.getName().toLowerCase().endsWith(
 											".pdf")) {
-										thread.submit(new StampPDF(window, fi));
+										thread.submit(new StampPDF(window, fi,
+												overwriteAll));
 										result = true;
 									} else {
 										System.err.println(f + " is not a PDF");
