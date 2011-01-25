@@ -115,7 +115,10 @@ public class SwingWindow {
 		// has value "true" if the user replied "Overwrite all"
 		final AtomicBoolean overwriteAll;
 
-		StampPDF(SwingWindow window, File inPdf, AtomicBoolean overwriteAll) {
+		final boolean showOverwriteAll;
+
+		StampPDF(SwingWindow window, File inPdf, AtomicBoolean overwriteAll,
+				boolean showOverwriteAll) {
 			int startNumber = Integer.parseInt(window.tfStartingNumber
 					.getText());
 			File outPdf = new File(inPdf.getAbsolutePath() + ".out.pdf");
@@ -125,6 +128,8 @@ public class SwingWindow {
 			} else {
 				this.overwriteAll = null;
 			}
+
+			this.showOverwriteAll = showOverwriteAll;
 
 			stamper = new batesStamper(inPdf.getAbsolutePath(), outPdf
 					.getAbsolutePath(), startNumber);
@@ -141,18 +146,20 @@ public class SwingWindow {
 		public void run() {
 
 			if (overwriteAll != null && overwriteAll.get() == false) {
+				int option = showOverwriteAll ? JOptionPane.DEFAULT_OPTION
+						: JOptionPane.YES_NO_OPTION;
+				Object[] options = showOverwriteAll ? new Object[] { "Yes",
+						"No", "Overwrite all" } : new Object[] { "Yes", "No" };
 				int result = JOptionPane.showOptionDialog(null,
 						"Do you want to overwrite the existing file\n'"
 								+ stamper.outputFileName + "'?",
-						"Overwrite existing file?",
-						JOptionPane.YES_NO_CANCEL_OPTION,
-						JOptionPane.WARNING_MESSAGE, null, new Object[] {
-								"Yes", "No", "Overwrite all"
+						"Overwrite existing file?", option,
+						JOptionPane.WARNING_MESSAGE, null, options, "No");
 
-						}, "No");
-				if (result == JOptionPane.NO_OPTION)
+				if (result == JOptionPane.NO_OPTION
+						|| result == JOptionPane.CLOSED_OPTION)
 					return;
-				if (result == JOptionPane.CANCEL_OPTION)
+				if (result == 2) // "Overwrite all"
 					overwriteAll.set(true);
 			}
 
@@ -212,7 +219,7 @@ public class SwingWindow {
 									if (fi.getName().toLowerCase().endsWith(
 											".pdf")) {
 										thread.submit(new StampPDF(window, fi,
-												overwriteAll));
+												overwriteAll, f.size() > 1));
 										result = true;
 									} else {
 										System.err.println(f + " is not a PDF");
