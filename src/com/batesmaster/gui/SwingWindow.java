@@ -408,5 +408,9 @@ public class SwingWindow {
 				.setText("The stamped output files will be created next to the originals. No existing files will be overwritten without warning.");
 		txtpnTheOutputFiles.setBounds(47, 74, 285, 63);
 		frame.getContentPane().add(txtpnTheOutputFiles);
+
+		JLabel lblGuiV = new JLabel("GUI v1.0");
+		lblGuiV.setBounds(320, 7, 61, 16);
+		frame.getContentPane().add(lblGuiV);
 	}
 }
