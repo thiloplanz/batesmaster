@@ -5,8 +5,8 @@ for the batesmaster command-line application.
 
 You can build a runnable jar file using "build_gui.xml" (and Ant build file).
 
-The application consists of a single dialog onto which
-you can drag PDF files from the OS file explorer.
+The application consists of a single dialog where you can
+select stamping options and the target PDF documents.
 These files will be processed using batesmaster.
 The output files are placed next to the originals.
 

@@ -10,15 +10,15 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.datatransfer.DataFlavor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -26,8 +26,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
-import javax.swing.TransferHandler;
 import javax.swing.UIManager;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.batesmaster.batesStamper;
 
@@ -50,6 +50,7 @@ public class SwingWindow {
 	private JTextField tfOffsetLeft;
 	private JTextField tfOffsetBottom;
 	private JTextField tfRotation;
+	private JButton btnSelectAndStamp;
 
 	static boolean isValid(Component... xs) {
 		for (Component x : xs)
@@ -58,7 +59,7 @@ public class SwingWindow {
 		return true;
 	}
 
-	static class ConstrainToInt extends FocusAdapter {
+	class ConstrainToInt extends FocusAdapter {
 
 		Integer max;
 
@@ -82,15 +83,17 @@ public class SwingWindow {
 					if (min != null && x < min)
 						throw new IllegalArgumentException("min = " + min);
 					tf.setBackground(Color.WHITE);
+					btnSelectAndStamp.setEnabled(true);
 				} catch (Exception ex) {
 					tf.setBackground(Color.RED);
+					btnSelectAndStamp.setEnabled(false);
 				}
 			}
 		}
 
 	}
 
-	static class ConstrainToFormat extends FocusAdapter {
+	class ConstrainToFormat extends FocusAdapter {
 		@Override
 		public void focusLost(FocusEvent e) {
 			Component c = e.getComponent();
@@ -100,8 +103,10 @@ public class SwingWindow {
 				try {
 					String.format(t, 1);
 					tf.setBackground(Color.WHITE);
+					btnSelectAndStamp.setEnabled(true);
 				} catch (Exception ex) {
 					tf.setBackground(Color.RED);
+					btnSelectAndStamp.setEnabled(false);
 				}
 			}
 		}
@@ -172,6 +177,32 @@ public class SwingWindow {
 
 		}
 
+		static void processFiles(SwingWindow window, File... f) {
+			SwingProgressDialog p = new SwingProgressDialog(f.length);
+			try {
+				window.frame.setVisible(false);
+				p.setVisible(true);
+				AtomicBoolean overwriteAll = new AtomicBoolean();
+				for (File fi : f) {
+					p.startNewFile(fi.getName());
+					if (fi.getName().toLowerCase().endsWith(".pdf")) {
+						new StampPDF(window, fi, overwriteAll, f.length > 1)
+								.run();
+					} else {
+						System.err.println(f + " is not a PDF");
+					}
+					p.completeOneFile();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(null,
+						"An internal error has occured: " + e);
+			} finally {
+				window.frame.setVisible(true);
+				p.setVisible(false);
+				p.dispose();
+			}
+		}
 	}
 
 	/**
@@ -182,61 +213,7 @@ public class SwingWindow {
 			public void run() {
 				try {
 					final SwingWindow window = new SwingWindow();
-					window.frame.setTransferHandler(new TransferHandler() {
 
-						private static final long serialVersionUID = 1L;
-
-						@Override
-						public boolean canImport(TransferSupport support) {
-							// check if all settings are valid
-							if (!isValid(window.tfStartingNumber, window.txtd,
-									window.tfOffsetLeft, window.tfOffsetBottom,
-									window.tfRotation))
-								return false;
-
-							if (support
-									.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-
-								support.setDropAction(COPY);
-								return true;
-
-							}
-							return false;
-						}
-
-						@SuppressWarnings("unchecked")
-						@Override
-						public boolean importData(TransferSupport support) {
-							ExecutorService thread = Executors
-									.newSingleThreadExecutor();
-							try {
-								List<File> f = (List<File>) support
-										.getTransferable().getTransferData(
-												DataFlavor.javaFileListFlavor);
-								boolean result = false;
-								AtomicBoolean overwriteAll = new AtomicBoolean();
-								for (File fi : f) {
-									if (fi.getName().toLowerCase().endsWith(
-											".pdf")) {
-										thread.submit(new StampPDF(window, fi,
-												overwriteAll, f.size() > 1));
-										result = true;
-									} else {
-										System.err.println(f + " is not a PDF");
-									}
-								}
-								return result;
-							} catch (Exception e) {
-								e.printStackTrace();
-								JOptionPane.showMessageDialog(null,
-										"An internal error has occured: " + e);
-							} finally {
-								thread.shutdown();
-							}
-							return false;
-						}
-
-					});
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -258,7 +235,7 @@ public class SwingWindow {
 	private void initialize() {
 		frame = new JFrame();
 		frame.setResizable(false);
-		frame.setBounds(100, 100, 387, 401);
+		frame.setBounds(100, 100, 391, 437);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 
@@ -273,19 +250,19 @@ public class SwingWindow {
 		lblBatesmasterIsOpen
 				.setToolTipText("batesmaster was so far written by Mark Manoukian and Gregory Pruden\nCopyright for the GUI wrapper: 2011, OpenThinking Systems, LLC");
 		lblBatesmasterIsOpen.setHorizontalAlignment(SwingConstants.TRAILING);
-		lblBatesmasterIsOpen.setBounds(6, 329, 375, 26);
+		lblBatesmasterIsOpen.setBounds(6, 367, 375, 26);
 		frame.getContentPane().add(lblBatesmasterIsOpen);
 
 		JLabel lblHttpwwwbatesmastercom = new JLabel(
 				"http://www.batesmaster.com/");
 		lblHttpwwwbatesmastercom
 				.setHorizontalAlignment(SwingConstants.TRAILING);
-		lblHttpwwwbatesmastercom.setBounds(134, 351, 247, 22);
+		lblHttpwwwbatesmastercom.setBounds(134, 387, 247, 22);
 		frame.getContentPane().add(lblHttpwwwbatesmastercom);
 
 		JPanel panel = new JPanel();
 		panel.setBorder(null);
-		panel.setBounds(37, 136, 324, 181);
+		panel.setBounds(37, 136, 323, 165);
 		frame.getContentPane().add(panel);
 		GridBagLayout gbl_panel = new GridBagLayout();
 		gbl_panel.columnWidths = new int[] { 250, 70, 0 };
@@ -394,23 +371,35 @@ public class SwingWindow {
 		gbc_tfRotation.gridy = 4;
 		panel.add(tfRotation, gbc_tfRotation);
 
-		JLabel lblDropPdfFiles = new JLabel(
-				"Drop PDF files on this window to stamp them");
-		lblDropPdfFiles.setHorizontalAlignment(SwingConstants.CENTER);
-		lblDropPdfFiles.setBounds(16, 46, 345, 16);
-		frame.getContentPane().add(lblDropPdfFiles);
-
 		JTextPane txtpnTheOutputFiles = new JTextPane();
 		txtpnTheOutputFiles.setBackground(UIManager
 				.getColor("Label.background"));
 		txtpnTheOutputFiles.setEditable(false);
 		txtpnTheOutputFiles
-				.setText("The stamped output files will be created next to the originals. No existing files will be overwritten without warning.");
-		txtpnTheOutputFiles.setBounds(47, 74, 285, 63);
+				.setText("Choose from the options below and then select PDF files to stamp them.\n\nThe stamped output files will be created next to the originals. No existing files will be overwritten without warning.");
+		txtpnTheOutputFiles.setBounds(47, 34, 285, 103);
 		frame.getContentPane().add(txtpnTheOutputFiles);
 
 		JLabel lblGuiV = new JLabel("GUI v1.0");
 		lblGuiV.setBounds(320, 7, 61, 16);
 		frame.getContentPane().add(lblGuiV);
+
+		btnSelectAndStamp = new JButton("Select and stamp PDF files");
+		btnSelectAndStamp.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser chooser = new JFileChooser();
+				chooser.setDialogTitle("Select PDF files to stamp");
+				chooser.setFileFilter(new FileNameExtensionFilter(
+						"PDF documents", "pdf"));
+				chooser.setMultiSelectionEnabled(true);
+				int returnVal = chooser.showOpenDialog(frame);
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					StampPDF.processFiles(SwingWindow.this, chooser
+							.getSelectedFiles());
+				}
+			}
+		});
+		btnSelectAndStamp.setBounds(128, 324, 232, 29);
+		frame.getContentPane().add(btnSelectAndStamp);
 	}
 }
