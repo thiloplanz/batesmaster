@@ -1,3 +1,5 @@
+// Copyright 2011 OpenThinking Systems, LLC
+// Available under the GPLv3 Open Source license
 package com.batesmaster.gui;
 
 import javax.swing.JFrame;
@@ -7,6 +9,7 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+@SuppressWarnings("serial")
 class SwingProgressDialog extends JFrame {
 
 	private final JPanel contentPane;

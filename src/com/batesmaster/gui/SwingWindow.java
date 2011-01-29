@@ -29,6 +29,7 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.batesmaster.Main;
 import com.batesmaster.batesStamper;
 
 /**
@@ -209,6 +210,20 @@ public class SwingWindow {
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+
+		// dispatch to command line tool?
+		if (args != null && args.length > 0) {
+			for (String arg : args) {
+				if ("-?".equals(arg)
+						|| (arg.startsWith("--") && "--overwrite --help --seed --startnum --xoffset --yoffset --rotate --location --format --inpdf --pdfout --textfile --dirin --dirout --recurse --verbose"
+								.contains(arg))) {
+					Main.main(args);
+					return;
+				}
+			}
+
+		}
+
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {

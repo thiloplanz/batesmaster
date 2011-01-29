@@ -3,12 +3,21 @@ This is a fork of the batesmaster project.
 The goal of this fork is to provide a Java Swing GUI wrapper
 for the batesmaster command-line application.
 
-You can build a runnable jar file using "build_gui.xml" (and Ant build file).
+You can build a runnable jar file using "build_gui.xml" (an Ant build file).
+
+Double-clicking on the jar file will bring up the GUI.
 
 The application consists of a single dialog where you can
 select stamping options and the target PDF documents.
 These files will be processed using batesmaster.
 The output files are placed next to the originals.
+
+You can also skip the GUI and access the original batesmaster
+command line tool by passing in any of the supported parameters,
+for example
+
+    java -jar batesmaster_gui.jar --inpdf a.pdf
+
 
 For more information on batesmaster see
 http://www.batesmaster.com/
