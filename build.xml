@@ -11,6 +11,7 @@
             <fileset dir="bin"/>
             <zipfileset excludes="META-INF/*.SF" src="lib/iText-2.1.7.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="lib/jopt-simple-3.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/bcprov-jdk15-145.jar"/>
         </jar>
     </target>
 </project>
